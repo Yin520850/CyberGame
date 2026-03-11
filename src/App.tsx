@@ -7,6 +7,7 @@ import EvidenceBoard from "./features/evidence/EvidenceBoard";
 import LocationView from "./features/investigation/LocationView";
 import MapPanel from "./features/investigation/MapPanel";
 import JudgementQuiz, { CH1_CORRECT_REASONS } from "./features/quiz/JudgementQuiz";
+import FinalReportPanel from "./features/story/FinalReportPanel";
 import StoryPanel from "./features/story/StoryPanel";
 import { chapterConfigs } from "./game/config";
 import { evaluateGate } from "./game/engine/gates";
@@ -281,6 +282,7 @@ function App() {
   const resolveClue = useGameStore((state) => state.resolveClue);
   const useClue = useGameStore((state) => state.useClue);
   const advanceStoryNode = useGameStore((state) => state.advanceStoryNode);
+  const resetGame = useGameStore((state) => state.reset);
 
   const isGateOpen = (gateId: string): boolean => {
     const gate = chapter.gates.find((candidate) => candidate.id === gateId);
@@ -343,6 +345,7 @@ function App() {
   const canGoToChapter3 = canAccessChapter(currentChapterId, storyNode, "ch3");
   const canGoToChapter4 = canAccessChapter(currentChapterId, storyNode, "ch4");
   const canGoToChapter5 = canAccessChapter(currentChapterId, storyNode, "ch5");
+  const showFinalReport = storyNode === "ch5_completed";
 
   const setTieredFailureFeedback = (fallbackMessage: string) => {
     const nextFailureCount = quizFailureCount + 1;
@@ -380,6 +383,12 @@ function App() {
     setFeedback("第一章通过");
     setChapter("ch2");
     setShowQuiz(false);
+  };
+
+  const handleRestartGame = () => {
+    resetGame();
+    setMode("story");
+    setFeedback("");
   };
 
   const handleCh2ReasoningSubmit = (selectedReasons: string[]) => {
@@ -591,6 +600,7 @@ function App() {
         </button>
       </div>
       <StoryPanel chapterId={currentChapterId} storyNode={storyNode} />
+      <FinalReportPanel visible={showFinalReport} onRestart={handleRestartGame} />
       <TaskTracker items={taskItems} />
       <ModeToggle
         mode={mode}

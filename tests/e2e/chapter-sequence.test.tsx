@@ -111,5 +111,13 @@ describe("chapter sequence", () => {
 
     await completeChapter5(user);
     expect(screen.getByText("全章完结")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "结案摘要" })).toBeInTheDocument();
+    expect(screen.getByText("账号使用与发布：已确认高远使用夜鸦账号。")).toBeInTheDocument();
+    expect(screen.getByText("误导行为：存在裁剪传播与线索改名行为。")).toBeInTheDocument();
+    expect(screen.getByText("责任与修复：需公开说明、道歉并执行修复方案。")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "重新开始调查" }));
+    expect(screen.getAllByText("当前章节：第一章").length).toBeGreaterThan(0);
+    expect(screen.getByText("剧情节点：ch1_start")).toBeInTheDocument();
   });
 });

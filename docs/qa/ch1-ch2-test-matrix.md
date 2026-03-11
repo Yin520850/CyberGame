@@ -1,4 +1,4 @@
-# CH1-CH2 验收矩阵
+# CH1-CH5 验收矩阵
 
 ## 自动化验证
 
@@ -14,7 +14,12 @@
 | QA-08 | CH1 仅在 3/3 正确时通关 | `tests/chapters/ch1-flow.test.tsx` |
 | QA-09 | CH2 任意两张照片解锁时间线 | `tests/chapters/ch2-flow.test.tsx` |
 | QA-10 | CH2 需四条主线索后可行性判断 | `tests/chapters/ch2-flow.test.tsx` |
-| QA-11 | CH1 -> CH2 串联，CH2 完成后出现 CH3 提示 | `tests/e2e/chapter-sequence.test.tsx` |
+| QA-11 | CH3 主线索收集后解锁线索溯源 | `tests/chapters/ch3-flow.test.tsx` |
+| QA-12 | CH4 主线索收集后解锁交叉验证 | `tests/chapters/ch4-flow.test.tsx` |
+| QA-13 | CH5 主线索收集后解锁结案报告 | `tests/chapters/ch5-flow.test.tsx` |
+| QA-14 | CH4/CH5 连续失败触发分级提示 | `tests/chapters/ch4-flow.test.tsx`、`tests/chapters/ch5-flow.test.tsx` |
+| QA-15 | CH1 -> CH5 全链路通关与结案摘要 | `tests/e2e/chapter-sequence.test.tsx` |
+| QA-16 | 终章“重新开始调查”重置到 CH1 | `tests/e2e/chapter-sequence.test.tsx` |
 
 ## 运行命令
 
@@ -25,5 +30,5 @@ npm run build
 
 ## 最新执行结果（2026-03-11）
 
-- `npm run test`: 10 files / 16 tests 全部通过
+- `npm run test`: 16 files / 27 tests 全部通过
 - `npm run build`: 通过
