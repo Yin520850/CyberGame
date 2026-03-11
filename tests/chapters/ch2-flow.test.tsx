@@ -32,6 +32,10 @@ describe("chapter 2 flow", () => {
     await user.click(screen.getByRole("button", { name: "切换到侦查模式" }));
 
     await user.click(screen.getByRole("button", { name: "活动室电脑" }));
+    expect(
+      screen.queryByRole("button", { name: "采集 异常文件名" })
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "搜索隐藏线索" }));
     await user.click(screen.getByRole("button", { name: "采集 异常文件名" }));
     expect(screen.getByRole("button", { name: "可行性判断（未解锁）" })).toBeDisabled();
 

@@ -43,7 +43,10 @@ describe("chapter sequence", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    expect(screen.getByRole("button", { name: "前往第二章" })).toBeDisabled();
+
     await completeChapter1(user);
+    expect(screen.getByRole("button", { name: "前往第二章" })).not.toBeDisabled();
     expect(screen.getAllByText("当前章节：第二章").length).toBeGreaterThan(0);
 
     await completeChapter2(user);

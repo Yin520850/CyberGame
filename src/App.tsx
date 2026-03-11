@@ -102,10 +102,14 @@ function App() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
   const [showQuiz, setShowQuiz] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [revealedHiddenLocations, setRevealedHiddenLocations] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     setSelectedLocationId(chapter.coreLocations[0]);
     setShowQuiz(false);
+    setRevealedHiddenLocations({});
   }, [chapter.id, chapter.coreLocations]);
 
   const modeLabel = mode === "story" ? "剧情模式" : "侦查模式";
@@ -141,6 +145,7 @@ function App() {
   const currentClues = chapter.clues.filter(
     (clue) => clue.locationId === selectedLocationId
   );
+  const hiddenRevealed = !!revealedHiddenLocations[selectedLocationId];
 
   const timelineEntries = useMemo(
     () =>
@@ -160,6 +165,18 @@ function App() {
       setFeedback("发现异常文件名：已记录（待主推理后解析）");
     }
   };
+
+  const handleRevealHiddenClues = () => {
+    setRevealedHiddenLocations((prev) => ({
+      ...prev,
+      [selectedLocationId]: true
+    }));
+  };
+
+  const canGoToChapter2 =
+    currentChapterId === "ch2" ||
+    storyNode === "ch1_completed" ||
+    storyNode === "ch2_completed";
 
   const handleCh1QuizSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH1_CORRECT_REASONS.size) {
@@ -217,7 +234,11 @@ function App() {
         <button type="button" onClick={() => setChapter("ch1")}>
           前往第一章
         </button>
-        <button type="button" onClick={() => setChapter("ch2")}>
+        <button
+          type="button"
+          onClick={() => setChapter("ch2")}
+          disabled={!canGoToChapter2}
+        >
           前往第二章
         </button>
       </div>
@@ -241,6 +262,8 @@ function App() {
             clues={currentClues}
             clueStates={clueStates}
             onCollectClue={handleCollectClue}
+            hiddenRevealed={hiddenRevealed}
+            onRevealHidden={handleRevealHiddenClues}
           />
           {currentChapterId === "ch2" && (
             <EvidenceBoard unlocked={timelineUnlocked} entries={timelineEntries} />

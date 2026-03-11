@@ -5,6 +5,8 @@ interface LocationViewProps {
   clues: ClueDefinition[];
   clueStates: Record<string, ClueState>;
   onCollectClue: (clueId: string) => void;
+  hiddenRevealed: boolean;
+  onRevealHidden: () => void;
 }
 
 function isCollected(state: ClueState | undefined): boolean {
@@ -15,16 +17,21 @@ function LocationView({
   locationLabel,
   clues,
   clueStates,
-  onCollectClue
+  onCollectClue,
+  hiddenRevealed,
+  onRevealHidden
 }: LocationViewProps) {
+  const hiddenClues = clues.filter((clue) => clue.hidden);
+  const visibleClues = clues.filter((clue) => !clue.hidden || hiddenRevealed);
+
   return (
     <section className="panel">
       <h2>{locationLabel}</h2>
-      {clues.length === 0 ? (
+      {visibleClues.length === 0 ? (
         <p>该地点暂无可交互线索。</p>
       ) : (
         <div className="clue-list">
-          {clues.map((clue) => {
+          {visibleClues.map((clue) => {
             const collected = isCollected(clueStates[clue.id]);
             return (
               <button
@@ -39,6 +46,11 @@ function LocationView({
             );
           })}
         </div>
+      )}
+      {hiddenClues.length > 0 && !hiddenRevealed && (
+        <button type="button" onClick={onRevealHidden}>
+          搜索隐藏线索
+        </button>
       )}
     </section>
   );
