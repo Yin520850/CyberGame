@@ -48,17 +48,50 @@ async function completeChapter3(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "提交判断" }));
 }
 
+async function completeChapter4(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "活动室电脑" }));
+  await user.click(screen.getByRole("button", { name: "采集 校园网登录记录" }));
+  await user.click(screen.getByRole("button", { name: "校内群聊界面" }));
+  await user.click(screen.getByRole("button", { name: "采集 聊天记录完整版" }));
+  await user.click(screen.getByRole("button", { name: "储物柜区" }));
+  await user.click(screen.getByRole("button", { name: "采集 论坛草稿纸" }));
+  await user.click(screen.getByRole("button", { name: "机房门外" }));
+  await user.click(screen.getByRole("button", { name: "搜索隐藏线索" }));
+  await user.click(screen.getByRole("button", { name: "采集 文件改名痕迹" }));
+  await user.click(screen.getByRole("button", { name: "开始交叉验证" }));
+  await user.click(screen.getByLabelText("登录记录与发帖时间接近"));
+  await user.click(screen.getByLabelText("论坛草稿与帖子标题高度相似"));
+  await user.click(screen.getByLabelText("文件改名时间与公共电脑操作吻合"));
+  await user.click(screen.getByRole("button", { name: "提交判断" }));
+}
+
+async function completeChapter5(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "机房门外" }));
+  await user.click(screen.getByRole("button", { name: "采集 高远口供记录" }));
+  await user.click(screen.getByRole("button", { name: "何老师办公室" }));
+  await user.click(screen.getByRole("button", { name: "采集 动机与误导说明" }));
+  await user.click(screen.getByRole("button", { name: "科技社活动室" }));
+  await user.click(screen.getByRole("button", { name: "采集 修复与责任方案" }));
+  await user.click(screen.getByRole("button", { name: "开始结案报告" }));
+  await user.click(screen.getByLabelText("高远使用夜鸦账号发布了不当内容"));
+  await user.click(screen.getByLabelText("存在刻意误导调查的行为"));
+  await user.click(screen.getByLabelText("网络行为需要承担责任与修复后果"));
+  await user.click(screen.getByRole("button", { name: "提交判断" }));
+}
+
 describe("chapter sequence", () => {
   beforeEach(() => {
     gameStore.getState().reset();
   });
 
-  test("moves from ch1 to ch3 and unlocks ch4 hint", async () => {
+  test("moves from ch1 to ch5 and shows finale hint", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     expect(screen.getByRole("button", { name: "前往第二章" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "前往第三章" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "前往第四章" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "前往第五章" })).toBeDisabled();
 
     await completeChapter1(user);
     expect(screen.getByRole("button", { name: "前往第二章" })).not.toBeDisabled();
@@ -69,6 +102,14 @@ describe("chapter sequence", () => {
     expect(screen.getAllByText("当前章节：第三章").length).toBeGreaterThan(0);
 
     await completeChapter3(user);
-    expect(screen.getByText("第四章入口已解锁")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "前往第四章" })).not.toBeDisabled();
+    expect(screen.getAllByText("当前章节：第四章").length).toBeGreaterThan(0);
+
+    await completeChapter4(user);
+    expect(screen.getByRole("button", { name: "前往第五章" })).not.toBeDisabled();
+    expect(screen.getAllByText("当前章节：第五章").length).toBeGreaterThan(0);
+
+    await completeChapter5(user);
+    expect(screen.getByText("全章完结")).toBeInTheDocument();
   });
 });

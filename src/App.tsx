@@ -18,7 +18,9 @@ type Mode = "story" | "investigation";
 const CHAPTER_LABELS: Record<string, string> = {
   ch1: "第一章",
   ch2: "第二章",
-  ch3: "第三章"
+  ch3: "第三章",
+  ch4: "第四章",
+  ch5: "第五章"
 };
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -65,10 +67,79 @@ const CH3_CORRECT_REASONS = new Set<string>([
   "储物柜纸袋提供更完整上下文"
 ]);
 
+const CH4_REASONING_OPTIONS = [
+  "登录记录与发帖时间接近",
+  "论坛草稿与帖子标题高度相似",
+  "文件改名时间与公共电脑操作吻合",
+  "线索都是真的所以不必验证",
+  "谁最沉默谁就最可疑",
+  "先入为主比证据更重要"
+];
+
+const CH4_CORRECT_REASONS = new Set<string>([
+  "登录记录与发帖时间接近",
+  "论坛草稿与帖子标题高度相似",
+  "文件改名时间与公共电脑操作吻合"
+]);
+
+const CH5_REASONING_OPTIONS = [
+  "高远使用夜鸦账号发布了不当内容",
+  "存在刻意误导调查的行为",
+  "网络行为需要承担责任与修复后果",
+  "匿名就不需要承担后果",
+  "只要道歉就无需复盘",
+  "截图传播不算参与"
+];
+
+const CH5_CORRECT_REASONS = new Set<string>([
+  "高远使用夜鸦账号发布了不当内容",
+  "存在刻意误导调查的行为",
+  "网络行为需要承担责任与修复后果"
+]);
+
 const CH2_PHOTO_IDS = ["ch2_photo_1", "ch2_photo_2", "ch2_photo_3"];
+const STORY_LEVEL: Record<string, number> = {
+  ch1_start: 0,
+  ch1_completed: 1,
+  ch2_completed: 2,
+  ch3_completed: 3,
+  ch4_completed: 4,
+  ch5_completed: 5
+};
 
 function isDiscovered(state: ClueState | undefined): boolean {
   return !!state && state !== "undiscovered";
+}
+
+function isStoryAtLeast(storyNode: string, minimumNode: string): boolean {
+  return (STORY_LEVEL[storyNode] ?? 0) >= (STORY_LEVEL[minimumNode] ?? 0);
+}
+
+function canAccessChapter(
+  currentChapterId: string,
+  storyNode: string,
+  targetChapterId: string
+): boolean {
+  if (currentChapterId === targetChapterId) {
+    return true;
+  }
+
+  if (targetChapterId === "ch1") {
+    return true;
+  }
+  if (targetChapterId === "ch2") {
+    return isStoryAtLeast(storyNode, "ch1_completed");
+  }
+  if (targetChapterId === "ch3") {
+    return isStoryAtLeast(storyNode, "ch2_completed");
+  }
+  if (targetChapterId === "ch4") {
+    return isStoryAtLeast(storyNode, "ch3_completed");
+  }
+  if (targetChapterId === "ch5") {
+    return isStoryAtLeast(storyNode, "ch4_completed");
+  }
+  return false;
 }
 
 function buildTaskItems(
@@ -89,10 +160,7 @@ function buildTaskItems(
       {
         id: "ch1-b",
         text: "完成证据判断",
-        done:
-          storyNode === "ch1_completed" ||
-          storyNode === "ch2_completed" ||
-          storyNode === "ch3_completed"
+        done: isStoryAtLeast(storyNode, "ch1_completed")
       }
     ];
   }
@@ -111,24 +179,61 @@ function buildTaskItems(
       {
         id: "ch2-b",
         text: "完成可行性判断",
-        done: storyNode === "ch2_completed" || storyNode === "ch3_completed"
+        done: isStoryAtLeast(storyNode, "ch2_completed")
+      }
+    ];
+  }
+
+  if (chapterId === "ch3") {
+    return [
+      {
+        id: "ch3-a",
+        text: "收集便签、海报提示与储物柜纸袋",
+        done:
+          isDiscovered(clueStates.ch3_cipher_note) &&
+          isDiscovered(clueStates.ch3_poster_hint) &&
+          isDiscovered(clueStates.ch3_locker_file)
+      },
+      {
+        id: "ch3-b",
+        text: "完成线索溯源",
+        done: isStoryAtLeast(storyNode, "ch3_completed")
+      }
+    ];
+  }
+
+  if (chapterId === "ch4") {
+    return [
+      {
+        id: "ch4-a",
+        text: "收集登录记录、聊天完整版、草稿纸与改名痕迹",
+        done:
+          isDiscovered(clueStates.ch4_login_log) &&
+          isDiscovered(clueStates.ch4_chat_full) &&
+          isDiscovered(clueStates.ch4_forum_draft) &&
+          isDiscovered(clueStates.ch4_filename_trace)
+      },
+      {
+        id: "ch4-b",
+        text: "完成交叉验证",
+        done: isStoryAtLeast(storyNode, "ch4_completed")
       }
     ];
   }
 
   return [
     {
-      id: "ch3-a",
-      text: "收集便签、海报提示与储物柜纸袋",
+      id: "ch5-a",
+      text: "收集口供、动机说明与责任方案",
       done:
-        isDiscovered(clueStates.ch3_cipher_note) &&
-        isDiscovered(clueStates.ch3_poster_hint) &&
-        isDiscovered(clueStates.ch3_locker_file)
+        isDiscovered(clueStates.ch5_confession) &&
+        isDiscovered(clueStates.ch5_motive_note) &&
+        isDiscovered(clueStates.ch5_responsibility_plan)
     },
     {
-      id: "ch3-b",
-      text: "完成线索溯源",
-      done: storyNode === "ch3_completed"
+      id: "ch5-b",
+      text: "完成结案报告",
+      done: isStoryAtLeast(storyNode, "ch5_completed")
     }
   ];
 }
@@ -162,16 +267,10 @@ function App() {
   const useClue = useGameStore((state) => state.useClue);
   const advanceStoryNode = useGameStore((state) => state.advanceStoryNode);
 
-  const ch1GateA = chapter.gates.find((gate) => gate.id === "Gate_A_调查解锁");
-  const ch1QuizUnlocked = ch1GateA ? evaluateGate(ch1GateA, { clueStates }) : false;
-  const ch2GateB = chapter.gates.find((gate) => gate.id === "Gate_B_主推理解锁");
-  const ch2ReasoningUnlocked = ch2GateB
-    ? evaluateGate(ch2GateB, { clueStates })
-    : false;
-  const ch3GateB = chapter.gates.find((gate) => gate.id === "Gate_B_主推理解锁");
-  const ch3ReasoningUnlocked = ch3GateB
-    ? evaluateGate(ch3GateB, { clueStates })
-    : false;
+  const isGateOpen = (gateId: string): boolean => {
+    const gate = chapter.gates.find((candidate) => candidate.id === gateId);
+    return gate ? evaluateGate(gate, { clueStates }) : false;
+  };
 
   const discoveredPhotoCount = CH2_PHOTO_IDS.filter((id) =>
     isDiscovered(clueStates[id])
@@ -213,6 +312,9 @@ function App() {
     if (currentChapterId === "ch3" && clueId === "ch3_old_draft") {
       setFeedback("发现旧创意草图：已记录（待线索溯源后解析）");
     }
+    if (currentChapterId === "ch4" && clueId === "ch4_filename_trace") {
+      setFeedback("发现文件改名痕迹：已记录（待交叉验证后归因）");
+    }
   };
 
   const handleRevealHiddenClues = () => {
@@ -222,15 +324,10 @@ function App() {
     }));
   };
 
-  const canGoToChapter2 =
-    currentChapterId === "ch2" ||
-    storyNode === "ch1_completed" ||
-    storyNode === "ch2_completed" ||
-    storyNode === "ch3_completed";
-  const canGoToChapter3 =
-    currentChapterId === "ch3" ||
-    storyNode === "ch2_completed" ||
-    storyNode === "ch3_completed";
+  const canGoToChapter2 = canAccessChapter(currentChapterId, storyNode, "ch2");
+  const canGoToChapter3 = canAccessChapter(currentChapterId, storyNode, "ch3");
+  const canGoToChapter4 = canAccessChapter(currentChapterId, storyNode, "ch4");
+  const canGoToChapter5 = canAccessChapter(currentChapterId, storyNode, "ch5");
 
   const handleCh1QuizSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH1_CORRECT_REASONS.size) {
@@ -264,7 +361,7 @@ function App() {
     const valid = selectedReasons.every((reason) =>
       CH2_CORRECT_REASONS.has(reason)
     );
-    if (!valid || !ch2ReasoningUnlocked) {
+    if (!valid || !isGateOpen("Gate_B_主推理解锁")) {
       setFeedback("推理依据不完整，请结合时间线再判断。");
       return;
     }
@@ -289,7 +386,7 @@ function App() {
     const valid = selectedReasons.every((reason) =>
       CH3_CORRECT_REASONS.has(reason)
     );
-    if (!valid || !ch3ReasoningUnlocked) {
+    if (!valid || !isGateOpen("Gate_B_主推理解锁")) {
       setFeedback("溯源依据不完整，请再核对三条核心线索。");
       return;
     }
@@ -300,15 +397,66 @@ function App() {
     useClue("ch3_locker_file");
     advanceStoryNode("ch3_completed");
     setFeedback("第三章通过");
+    setChapter("ch4");
+    setShowQuiz(false);
+  };
+
+  const handleCh4ReasoningSubmit = (selectedReasons: string[]) => {
+    if (selectedReasons.length !== CH4_CORRECT_REASONS.size) {
+      setFeedback("交叉验证不完整，请检查时间与行为链条。");
+      return;
+    }
+
+    const valid = selectedReasons.every((reason) =>
+      CH4_CORRECT_REASONS.has(reason)
+    );
+    if (!valid || !isGateOpen("Gate_B_交叉验证解锁")) {
+      setFeedback("交叉验证不完整，请检查时间与行为链条。");
+      return;
+    }
+
+    useClue("ch4_login_log");
+    useClue("ch4_chat_full");
+    useClue("ch4_forum_draft");
+    useClue("ch4_filename_trace");
+    advanceStoryNode("ch4_completed");
+    setFeedback("第四章通过");
+    setChapter("ch5");
+    setShowQuiz(false);
+  };
+
+  const handleCh5ReasoningSubmit = (selectedReasons: string[]) => {
+    if (selectedReasons.length !== CH5_CORRECT_REASONS.size) {
+      setFeedback("结案要点不完整，请补齐责任链条。");
+      return;
+    }
+
+    const valid = selectedReasons.every((reason) =>
+      CH5_CORRECT_REASONS.has(reason)
+    );
+    if (!valid || !isGateOpen("Gate_A_结案解锁")) {
+      setFeedback("结案要点不完整，请补齐责任链条。");
+      return;
+    }
+
+    useClue("ch5_confession");
+    useClue("ch5_motive_note");
+    useClue("ch5_responsibility_plan");
+    advanceStoryNode("ch5_completed");
+    setFeedback("第五章完结");
     setShowQuiz(false);
   };
 
   const quizUnlocked =
     currentChapterId === "ch1"
-      ? ch1QuizUnlocked
+      ? isGateOpen("Gate_A_调查解锁")
       : currentChapterId === "ch2"
-        ? ch2ReasoningUnlocked
-        : ch3ReasoningUnlocked;
+        ? isGateOpen("Gate_B_主推理解锁")
+        : currentChapterId === "ch3"
+          ? isGateOpen("Gate_B_主推理解锁")
+          : currentChapterId === "ch4"
+            ? isGateOpen("Gate_B_交叉验证解锁")
+            : isGateOpen("Gate_A_结案解锁");
   const quizButtonText =
     currentChapterId === "ch1"
       ? quizUnlocked
@@ -318,33 +466,57 @@ function App() {
         ? quizUnlocked
           ? "开始可行性判断"
           : "可行性判断（未解锁）"
-        : quizUnlocked
-          ? "开始线索溯源"
-          : "线索溯源（未解锁）";
+        : currentChapterId === "ch3"
+          ? quizUnlocked
+            ? "开始线索溯源"
+            : "线索溯源（未解锁）"
+          : currentChapterId === "ch4"
+            ? quizUnlocked
+              ? "开始交叉验证"
+              : "交叉验证（未解锁）"
+            : quizUnlocked
+              ? "开始结案报告"
+              : "结案报告（未解锁）";
   const quizTitle =
     currentChapterId === "ch1"
       ? "证据判断"
       : currentChapterId === "ch2"
         ? "可行性判断"
-        : "线索溯源";
+        : currentChapterId === "ch3"
+          ? "线索溯源"
+          : currentChapterId === "ch4"
+            ? "交叉验证"
+            : "结案报告";
   const quizPrompt =
     currentChapterId === "ch1"
       ? "选择三项不能直接证明陈小北泄密的理由："
       : currentChapterId === "ch2"
         ? "选择三项支持“陈小北无法单独完成完整链路”的依据："
-        : "选择三项支持“神秘线索被刻意用于误导”的依据：";
+        : currentChapterId === "ch3"
+          ? "选择三项支持“神秘线索被刻意用于误导”的依据："
+          : currentChapterId === "ch4"
+            ? "选择三项能够互相印证“误导链路成立”的依据："
+            : "选择三项构成完整结案结论的要点：";
   const quizReasons =
     currentChapterId === "ch1"
       ? undefined
       : currentChapterId === "ch2"
         ? CH2_REASONING_OPTIONS
-        : CH3_REASONING_OPTIONS;
+        : currentChapterId === "ch3"
+          ? CH3_REASONING_OPTIONS
+          : currentChapterId === "ch4"
+            ? CH4_REASONING_OPTIONS
+            : CH5_REASONING_OPTIONS;
   const quizSubmitHandler =
     currentChapterId === "ch1"
       ? handleCh1QuizSubmit
       : currentChapterId === "ch2"
         ? handleCh2ReasoningSubmit
-        : handleCh3ReasoningSubmit;
+        : currentChapterId === "ch3"
+          ? handleCh3ReasoningSubmit
+          : currentChapterId === "ch4"
+            ? handleCh4ReasoningSubmit
+            : handleCh5ReasoningSubmit;
 
   return (
     <main className="app-shell">
@@ -368,6 +540,20 @@ function App() {
           disabled={!canGoToChapter3}
         >
           前往第三章
+        </button>
+        <button
+          type="button"
+          onClick={() => setChapter("ch4")}
+          disabled={!canGoToChapter4}
+        >
+          前往第四章
+        </button>
+        <button
+          type="button"
+          onClick={() => setChapter("ch5")}
+          disabled={!canGoToChapter5}
+        >
+          前往第五章
         </button>
       </div>
       <StoryPanel chapterId={currentChapterId} storyNode={storyNode} />
