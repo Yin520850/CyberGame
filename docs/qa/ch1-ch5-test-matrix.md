@@ -20,6 +20,9 @@
 | QA-14 | CH4/CH5 连续失败触发分级提示 | `tests/chapters/ch4-flow.test.tsx`、`tests/chapters/ch5-flow.test.tsx` |
 | QA-15 | CH1 -> CH5 全链路通关与结案摘要 | `tests/e2e/chapter-sequence.test.tsx` |
 | QA-16 | 终章“重新开始调查”重置到 CH1 | `tests/e2e/chapter-sequence.test.tsx` |
+| QA-17 | 章节入口门控对未达剧情节点保持关闭 | `tests/chapters/progression.test.ts` |
+| QA-18 | Store 进度支持本地持久化读写与重置 | `tests/store/gameStore.test.ts` |
+| QA-19 | 终章完成后不可再次进入结案问答 | `tests/chapters/ch5-flow.test.tsx` |
 
 ## 运行命令
 
@@ -30,5 +33,5 @@ npm run build
 
 ## 最新执行结果（2026-03-11）
 
-- `npm run test`: 16 files / 27 tests 全部通过
+- `npm run test`: 17 files / 34 tests 全部通过
 - `npm run build`: 通过

@@ -48,6 +48,10 @@ describe("chapter 5 flow", () => {
     await user.click(screen.getByRole("button", { name: "提交判断" }));
 
     expect(screen.getByText("第五章完结")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "结案已完成" })).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "开始结案报告" })
+    ).not.toBeInTheDocument();
   });
 
   test("shows tiered hints after repeated wrong submissions", async () => {
