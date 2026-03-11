@@ -34,22 +34,41 @@ async function completeChapter2(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "提交判断" }));
 }
 
+async function completeChapter3(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "科技社活动室" }));
+  await user.click(screen.getByRole("button", { name: "采集 凯撒便签(NLIDQJ)" }));
+  await user.click(screen.getByRole("button", { name: "走廊公告栏" }));
+  await user.click(screen.getByRole("button", { name: "采集 海报角落箭头提示" }));
+  await user.click(screen.getByRole("button", { name: "储物柜区" }));
+  await user.click(screen.getByRole("button", { name: "采集 储物柜纸袋" }));
+  await user.click(screen.getByRole("button", { name: "开始线索溯源" }));
+  await user.click(screen.getByLabelText("便签可由简单位移规则解读"));
+  await user.click(screen.getByLabelText("海报提示与便签指向同一地点"));
+  await user.click(screen.getByLabelText("储物柜纸袋提供更完整上下文"));
+  await user.click(screen.getByRole("button", { name: "提交判断" }));
+}
+
 describe("chapter sequence", () => {
   beforeEach(() => {
     gameStore.getState().reset();
   });
 
-  test("moves from ch1 to ch2 and unlocks ch3 hint", async () => {
+  test("moves from ch1 to ch3 and unlocks ch4 hint", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     expect(screen.getByRole("button", { name: "前往第二章" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "前往第三章" })).toBeDisabled();
 
     await completeChapter1(user);
     expect(screen.getByRole("button", { name: "前往第二章" })).not.toBeDisabled();
     expect(screen.getAllByText("当前章节：第二章").length).toBeGreaterThan(0);
 
     await completeChapter2(user);
-    expect(screen.getByText("第三章入口已解锁")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "前往第三章" })).not.toBeDisabled();
+    expect(screen.getAllByText("当前章节：第三章").length).toBeGreaterThan(0);
+
+    await completeChapter3(user);
+    expect(screen.getByText("第四章入口已解锁")).toBeInTheDocument();
   });
 });

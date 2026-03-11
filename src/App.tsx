@@ -15,6 +15,12 @@ import type { ClueState } from "./game/types";
 
 type Mode = "story" | "investigation";
 
+const CHAPTER_LABELS: Record<string, string> = {
+  ch1: "第一章",
+  ch2: "第二章",
+  ch3: "第三章"
+};
+
 const LOCATION_LABELS: Record<string, string> = {
   activity_room: "科技社活动室",
   teacher_office: "何老师办公室",
@@ -44,6 +50,21 @@ const CH2_CORRECT_REASONS = new Set<string>([
   "匿名发帖与传播需要额外操作时间"
 ]);
 
+const CH3_REASONING_OPTIONS = [
+  "便签可由简单位移规则解读",
+  "海报提示与便签指向同一地点",
+  "储物柜纸袋提供更完整上下文",
+  "字母看起来很神秘所以肯定有罪",
+  "谁先发现便签谁就最可疑",
+  "名字陌生说明一定在隐瞒"
+];
+
+const CH3_CORRECT_REASONS = new Set<string>([
+  "便签可由简单位移规则解读",
+  "海报提示与便签指向同一地点",
+  "储物柜纸袋提供更完整上下文"
+]);
+
 const CH2_PHOTO_IDS = ["ch2_photo_1", "ch2_photo_2", "ch2_photo_3"];
 
 function isDiscovered(state: ClueState | undefined): boolean {
@@ -68,25 +89,46 @@ function buildTaskItems(
       {
         id: "ch1-b",
         text: "完成证据判断",
-        done: storyNode === "ch1_completed" || storyNode === "ch2_completed"
+        done:
+          storyNode === "ch1_completed" ||
+          storyNode === "ch2_completed" ||
+          storyNode === "ch3_completed"
+      }
+    ];
+  }
+
+  if (chapterId === "ch2") {
+    return [
+      {
+        id: "ch2-a",
+        text: "收集三张照片与打印记录",
+        done:
+          isDiscovered(clueStates.ch2_photo_1) &&
+          isDiscovered(clueStates.ch2_photo_2) &&
+          isDiscovered(clueStates.ch2_photo_3) &&
+          isDiscovered(clueStates.ch2_print_log)
+      },
+      {
+        id: "ch2-b",
+        text: "完成可行性判断",
+        done: storyNode === "ch2_completed" || storyNode === "ch3_completed"
       }
     ];
   }
 
   return [
     {
-      id: "ch2-a",
-      text: "收集三张照片与打印记录",
+      id: "ch3-a",
+      text: "收集便签、海报提示与储物柜纸袋",
       done:
-        isDiscovered(clueStates.ch2_photo_1) &&
-        isDiscovered(clueStates.ch2_photo_2) &&
-        isDiscovered(clueStates.ch2_photo_3) &&
-        isDiscovered(clueStates.ch2_print_log)
+        isDiscovered(clueStates.ch3_cipher_note) &&
+        isDiscovered(clueStates.ch3_poster_hint) &&
+        isDiscovered(clueStates.ch3_locker_file)
     },
     {
-      id: "ch2-b",
-      text: "完成可行性判断",
-      done: storyNode === "ch2_completed"
+      id: "ch3-b",
+      text: "完成线索溯源",
+      done: storyNode === "ch3_completed"
     }
   ];
 }
@@ -126,6 +168,10 @@ function App() {
   const ch2ReasoningUnlocked = ch2GateB
     ? evaluateGate(ch2GateB, { clueStates })
     : false;
+  const ch3GateB = chapter.gates.find((gate) => gate.id === "Gate_B_主推理解锁");
+  const ch3ReasoningUnlocked = ch3GateB
+    ? evaluateGate(ch3GateB, { clueStates })
+    : false;
 
   const discoveredPhotoCount = CH2_PHOTO_IDS.filter((id) =>
     isDiscovered(clueStates[id])
@@ -164,6 +210,9 @@ function App() {
     if (currentChapterId === "ch2" && clueId === "ch2_filename_hint") {
       setFeedback("发现异常文件名：已记录（待主推理后解析）");
     }
+    if (currentChapterId === "ch3" && clueId === "ch3_old_draft") {
+      setFeedback("发现旧创意草图：已记录（待线索溯源后解析）");
+    }
   };
 
   const handleRevealHiddenClues = () => {
@@ -176,7 +225,12 @@ function App() {
   const canGoToChapter2 =
     currentChapterId === "ch2" ||
     storyNode === "ch1_completed" ||
-    storyNode === "ch2_completed";
+    storyNode === "ch2_completed" ||
+    storyNode === "ch3_completed";
+  const canGoToChapter3 =
+    currentChapterId === "ch3" ||
+    storyNode === "ch2_completed" ||
+    storyNode === "ch3_completed";
 
   const handleCh1QuizSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH1_CORRECT_REASONS.size) {
@@ -222,13 +276,80 @@ function App() {
     useClue("ch2_print_log");
     advanceStoryNode("ch2_completed");
     setFeedback("第二章通过");
+    setChapter("ch3");
     setShowQuiz(false);
   };
+
+  const handleCh3ReasoningSubmit = (selectedReasons: string[]) => {
+    if (selectedReasons.length !== CH3_CORRECT_REASONS.size) {
+      setFeedback("溯源依据不完整，请再核对三条核心线索。");
+      return;
+    }
+
+    const valid = selectedReasons.every((reason) =>
+      CH3_CORRECT_REASONS.has(reason)
+    );
+    if (!valid || !ch3ReasoningUnlocked) {
+      setFeedback("溯源依据不完整，请再核对三条核心线索。");
+      return;
+    }
+
+    resolveClue("ch3_old_draft");
+    useClue("ch3_cipher_note");
+    useClue("ch3_poster_hint");
+    useClue("ch3_locker_file");
+    advanceStoryNode("ch3_completed");
+    setFeedback("第三章通过");
+    setShowQuiz(false);
+  };
+
+  const quizUnlocked =
+    currentChapterId === "ch1"
+      ? ch1QuizUnlocked
+      : currentChapterId === "ch2"
+        ? ch2ReasoningUnlocked
+        : ch3ReasoningUnlocked;
+  const quizButtonText =
+    currentChapterId === "ch1"
+      ? quizUnlocked
+        ? "开始证据判断"
+        : "证据判断（未解锁）"
+      : currentChapterId === "ch2"
+        ? quizUnlocked
+          ? "开始可行性判断"
+          : "可行性判断（未解锁）"
+        : quizUnlocked
+          ? "开始线索溯源"
+          : "线索溯源（未解锁）";
+  const quizTitle =
+    currentChapterId === "ch1"
+      ? "证据判断"
+      : currentChapterId === "ch2"
+        ? "可行性判断"
+        : "线索溯源";
+  const quizPrompt =
+    currentChapterId === "ch1"
+      ? "选择三项不能直接证明陈小北泄密的理由："
+      : currentChapterId === "ch2"
+        ? "选择三项支持“陈小北无法单独完成完整链路”的依据："
+        : "选择三项支持“神秘线索被刻意用于误导”的依据：";
+  const quizReasons =
+    currentChapterId === "ch1"
+      ? undefined
+      : currentChapterId === "ch2"
+        ? CH2_REASONING_OPTIONS
+        : CH3_REASONING_OPTIONS;
+  const quizSubmitHandler =
+    currentChapterId === "ch1"
+      ? handleCh1QuizSubmit
+      : currentChapterId === "ch2"
+        ? handleCh2ReasoningSubmit
+        : handleCh3ReasoningSubmit;
 
   return (
     <main className="app-shell">
       <h1>消失的机器人大赛方案</h1>
-      <p>当前章节：{currentChapterId === "ch1" ? "第一章" : "第二章"}</p>
+      <p>当前章节：{CHAPTER_LABELS[currentChapterId] ?? currentChapterId}</p>
       <p>当前模式：{modeLabel}</p>
       <div className="chapter-switch">
         <button type="button" onClick={() => setChapter("ch1")}>
@@ -240,6 +361,13 @@ function App() {
           disabled={!canGoToChapter2}
         >
           前往第二章
+        </button>
+        <button
+          type="button"
+          onClick={() => setChapter("ch3")}
+          disabled={!canGoToChapter3}
+        >
+          前往第三章
         </button>
       </div>
       <StoryPanel chapterId={currentChapterId} storyNode={storyNode} />
@@ -273,34 +401,16 @@ function App() {
             <button
               type="button"
               onClick={() => setShowQuiz(true)}
-              disabled={
-                currentChapterId === "ch1" ? !ch1QuizUnlocked : !ch2ReasoningUnlocked
-              }
+              disabled={!quizUnlocked}
             >
-              {currentChapterId === "ch1"
-                ? ch1QuizUnlocked
-                  ? "开始证据判断"
-                  : "证据判断（未解锁）"
-                : ch2ReasoningUnlocked
-                  ? "开始可行性判断"
-                  : "可行性判断（未解锁）"}
+              {quizButtonText}
             </button>
           ) : (
             <JudgementQuiz
-              title={currentChapterId === "ch1" ? "证据判断" : "可行性判断"}
-              prompt={
-                currentChapterId === "ch1"
-                  ? "选择三项不能直接证明陈小北泄密的理由："
-                  : "选择三项支持“陈小北无法单独完成完整链路”的依据："
-              }
-              reasons={
-                currentChapterId === "ch1" ? undefined : CH2_REASONING_OPTIONS
-              }
-              onSubmit={
-                currentChapterId === "ch1"
-                  ? handleCh1QuizSubmit
-                  : handleCh2ReasoningSubmit
-              }
+              title={quizTitle}
+              prompt={quizPrompt}
+              reasons={quizReasons}
+              onSubmit={quizSubmitHandler}
             />
           )}
           <FeedbackToast message={feedback} />
