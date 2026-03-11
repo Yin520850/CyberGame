@@ -16,6 +16,7 @@ interface GameStoreState {
   discoverClue: (clueId: string) => void;
   resolveClue: (clueId: string) => void;
   useClue: (clueId: string) => void;
+  reset: () => void;
 }
 
 const CLUE_LEVEL: Record<ClueState, number> = {
@@ -107,7 +108,8 @@ export function createGameStore() {
             "used_in_reasoning"
           )
         }
-      }))
+      })),
+    reset: () => set({ ...initialState })
   }));
 }
 
