@@ -2,10 +2,12 @@ import "./styles/base.css";
 import { useEffect, useMemo, useState } from "react";
 import ModeToggle from "./features/common/ModeToggle";
 import FeedbackToast from "./features/common/FeedbackToast";
+import TaskTracker, { type TaskItem } from "./features/common/TaskTracker";
 import EvidenceBoard from "./features/evidence/EvidenceBoard";
 import LocationView from "./features/investigation/LocationView";
 import MapPanel from "./features/investigation/MapPanel";
 import JudgementQuiz, { CH1_CORRECT_REASONS } from "./features/quiz/JudgementQuiz";
+import StoryPanel from "./features/story/StoryPanel";
 import { chapterConfigs } from "./game/config";
 import { evaluateGate } from "./game/engine/gates";
 import { useGameStore } from "./game/store/gameStore";
@@ -48,6 +50,47 @@ function isDiscovered(state: ClueState | undefined): boolean {
   return !!state && state !== "undiscovered";
 }
 
+function buildTaskItems(
+  chapterId: string,
+  clueStates: Record<string, ClueState>,
+  storyNode: string
+): TaskItem[] {
+  if (chapterId === "ch1") {
+    return [
+      {
+        id: "ch1-a",
+        text: "收集三条主线索",
+        done:
+          isDiscovered(clueStates.ch1_forum_shot) &&
+          isDiscovered(clueStates.ch1_forum_export) &&
+          isDiscovered(clueStates.ch1_chat_log)
+      },
+      {
+        id: "ch1-b",
+        text: "完成证据判断",
+        done: storyNode === "ch1_completed" || storyNode === "ch2_completed"
+      }
+    ];
+  }
+
+  return [
+    {
+      id: "ch2-a",
+      text: "收集三张照片与打印记录",
+      done:
+        isDiscovered(clueStates.ch2_photo_1) &&
+        isDiscovered(clueStates.ch2_photo_2) &&
+        isDiscovered(clueStates.ch2_photo_3) &&
+        isDiscovered(clueStates.ch2_print_log)
+    },
+    {
+      id: "ch2-b",
+      text: "完成可行性判断",
+      done: storyNode === "ch2_completed"
+    }
+  ];
+}
+
 function App() {
   const [mode, setMode] = useState<Mode>("story");
   const currentChapterId = useGameStore((state) => state.currentChapterId);
@@ -67,6 +110,7 @@ function App() {
 
   const modeLabel = mode === "story" ? "剧情模式" : "侦查模式";
   const clueStates = useGameStore((state) => state.clueStates);
+  const storyNode = useGameStore((state) => state.storyNode);
   const discoverClue = useGameStore((state) => state.discoverClue);
   const resolveClue = useGameStore((state) => state.resolveClue);
   const useClue = useGameStore((state) => state.useClue);
@@ -104,6 +148,10 @@ function App() {
         .filter((clue) => CH2_PHOTO_IDS.includes(clue.id) && isDiscovered(clueStates[clue.id]))
         .map((clue) => clue.name),
     [chapter.clues, clueStates]
+  );
+  const taskItems = useMemo(
+    () => buildTaskItems(currentChapterId, clueStates, storyNode),
+    [currentChapterId, clueStates, storyNode]
   );
 
   const handleCollectClue = (clueId: string) => {
@@ -173,6 +221,8 @@ function App() {
           前往第二章
         </button>
       </div>
+      <StoryPanel chapterId={currentChapterId} storyNode={storyNode} />
+      <TaskTracker items={taskItems} />
       <ModeToggle
         mode={mode}
         onToggle={() =>

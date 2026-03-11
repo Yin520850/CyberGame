@@ -27,6 +27,11 @@ body {
   gap: 12px;
 }
 
+.chapter-switch {
+  display: flex;
+  gap: 8px;
+}
+
 .panel {
   width: 100%;
   border: 1px solid #cbd5e1;
