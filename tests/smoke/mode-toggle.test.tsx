@@ -1,6 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../../src/App";
+import { gameStore } from "../../src/game/store/gameStore";
+
+beforeEach(() => {
+  window.localStorage.clear();
+  gameStore.getState().reset();
+});
 
 test("toggle mode", async () => {
   const user = userEvent.setup();

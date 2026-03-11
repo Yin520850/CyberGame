@@ -16,10 +16,11 @@ interface GameStoreState {
   discoverClue: (clueId: string) => void;
   resolveClue: (clueId: string) => void;
   useClue: (clueId: string) => void;
+  hydrateProgress: (snapshot: Partial<PersistedGameState>) => void;
   reset: () => void;
 }
 
-type PersistedGameState = Pick<
+export type PersistedGameState = Pick<
   GameStoreState,
   "mode" | "currentChapterId" | "storyNode" | "clueStates" | "locationUnlocked"
 >;
@@ -180,6 +181,41 @@ function readPersistedState(): Partial<typeof initialState> {
   }
 }
 
+function sanitizePersistedSnapshot(
+  snapshot: Partial<PersistedGameState>
+): PersistedGameState {
+  const safeSnapshot = {
+    ...initialState,
+    ...snapshot
+  };
+
+  const clueStates: Record<string, ClueState> = {};
+  if (isObjectRecord(safeSnapshot.clueStates)) {
+    Object.entries(safeSnapshot.clueStates).forEach(([clueId, clueState]) => {
+      if (isClueStateValue(clueState)) {
+        clueStates[clueId] = clueState;
+      }
+    });
+  }
+
+  const locationUnlocked: Record<string, boolean> = {};
+  if (isObjectRecord(safeSnapshot.locationUnlocked)) {
+    Object.entries(safeSnapshot.locationUnlocked).forEach(([locationId, unlocked]) => {
+      if (typeof unlocked === "boolean") {
+        locationUnlocked[locationId] = unlocked;
+      }
+    });
+  }
+
+  return {
+    mode: safeSnapshot.mode === "investigation" ? "investigation" : "story",
+    currentChapterId: safeSnapshot.currentChapterId,
+    storyNode: safeSnapshot.storyNode,
+    clueStates,
+    locationUnlocked
+  };
+}
+
 export function createGameStore() {
   const hydratedState = { ...initialState, ...readPersistedState() };
 
@@ -262,6 +298,13 @@ export function createGameStore() {
         );
         return nextState;
       }),
+    hydrateProgress: (snapshot) => {
+      const hydratedSnapshot = sanitizePersistedSnapshot(snapshot);
+      set({
+        ...hydratedSnapshot
+      });
+      persistState(hydratedSnapshot);
+    },
     reset: () => {
       set({ ...initialState });
       persistState({

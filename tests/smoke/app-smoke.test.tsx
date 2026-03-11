@@ -1,5 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import App from "../../src/App";
+import { gameStore } from "../../src/game/store/gameStore";
+
+beforeEach(() => {
+  window.localStorage.clear();
+  gameStore.getState().reset();
+});
 
 test("renders game shell title", () => {
   render(<App />);

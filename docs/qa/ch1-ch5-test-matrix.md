@@ -23,6 +23,8 @@
 | QA-17 | 章节入口门控对未达剧情节点保持关闭 | `tests/chapters/progression.test.ts` |
 | QA-18 | Store 进度支持本地持久化读写与重置 | `tests/store/gameStore.test.ts` |
 | QA-19 | 终章完成后不可再次进入结案问答 | `tests/chapters/ch5-flow.test.tsx` |
+| QA-20 | Gal 场景演出与 CG 锁定/解锁展示正确 | `tests/story/gal-presentation.test.tsx` |
+| QA-21 | 小后端云存档接口支持登录与读写回环 | `tests/server/cloud-api.test.ts` |
 
 ## 运行命令
 
@@ -33,5 +35,5 @@ npm run build
 
 ## 最新执行结果（2026-03-11）
 
-- `npm run test`: 17 files / 34 tests 全部通过
+- `npm run test`: 19 files / 37 tests 全部通过
 - `npm run build`: 通过

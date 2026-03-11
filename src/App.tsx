@@ -9,6 +9,9 @@ import MapPanel from "./features/investigation/MapPanel";
 import JudgementQuiz, { CH1_CORRECT_REASONS } from "./features/quiz/JudgementQuiz";
 import FinalReportPanel from "./features/story/FinalReportPanel";
 import StoryPanel from "./features/story/StoryPanel";
+import GalScene from "./features/story/GalScene";
+import CGGallery from "./features/story/CGGallery";
+import CloudSyncPanel from "./features/story/CloudSyncPanel";
 import { LOCATION_LABELS } from "./game/chapter/locations";
 import {
   CHAPTER_LABELS,
@@ -16,13 +19,12 @@ import {
   isStoryAtLeast,
   type ChapterId
 } from "./game/chapter/progression";
+import { CG_ENTRIES, getSceneFrame } from "./game/chapter/scene";
 import { CHAPTER_FAILURE_HINTS, getChapterQuizConfig } from "./game/chapter/quiz";
 import { buildTaskItems, isDiscovered } from "./game/chapter/tasks";
 import { chapterConfigs } from "./game/config";
 import { evaluateGate } from "./game/engine/gates";
-import { useGameStore } from "./game/store/gameStore";
-
-type Mode = "story" | "investigation";
+import { useGameStore, type PersistedGameState } from "./game/store/gameStore";
 
 const CH2_PHOTO_IDS = ["ch2_photo_1", "ch2_photo_2", "ch2_photo_3"];
 
@@ -33,22 +35,26 @@ const HIDDEN_CLUE_FEEDBACK: Record<string, string> = {
 };
 
 function App() {
-  const [mode, setMode] = useState<Mode>("story");
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
   const [showQuiz, setShowQuiz] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [quizFailureCount, setQuizFailureCount] = useState(0);
+  const [showChapterTransition, setShowChapterTransition] = useState(true);
   const [revealedHiddenLocations, setRevealedHiddenLocations] = useState<
     Record<string, boolean>
   >({});
 
+  const mode = useGameStore((state) => state.mode);
   const currentChapterId = useGameStore((state) => state.currentChapterId);
   const clueStates = useGameStore((state) => state.clueStates);
   const storyNode = useGameStore((state) => state.storyNode);
+  const locationUnlocked = useGameStore((state) => state.locationUnlocked);
+  const setMode = useGameStore((state) => state.setMode);
   const setChapter = useGameStore((state) => state.setChapter);
   const discoverClue = useGameStore((state) => state.discoverClue);
   const resolveClue = useGameStore((state) => state.resolveClue);
   const useClue = useGameStore((state) => state.useClue);
+  const hydrateProgress = useGameStore((state) => state.hydrateProgress);
   const advanceStoryNode = useGameStore((state) => state.advanceStoryNode);
   const resetGame = useGameStore((state) => state.reset);
 
@@ -67,9 +73,36 @@ function App() {
     setRevealedHiddenLocations({});
   }, [chapter.id, chapter.coreLocations]);
 
+  useEffect(() => {
+    setShowChapterTransition(true);
+    const timer = window.setTimeout(() => setShowChapterTransition(false), 1200);
+    return () => window.clearTimeout(timer);
+  }, [currentChapterId]);
+
   const modeLabel = mode === "story" ? "剧情模式" : "侦查模式";
   const chapterLabel =
     CHAPTER_LABELS[currentChapterId as ChapterId] ?? currentChapterId;
+  const sceneFrame = useMemo(
+    () => getSceneFrame(currentChapterId, storyNode),
+    [currentChapterId, storyNode]
+  );
+  const unlockedCgIds = useMemo(
+    () =>
+      CG_ENTRIES.filter((entry) => isStoryAtLeast(storyNode, entry.unlockNode)).map(
+        (entry) => entry.id
+      ),
+    [storyNode]
+  );
+  const progressSnapshot = useMemo<PersistedGameState>(
+    () => ({
+      mode,
+      currentChapterId,
+      storyNode,
+      clueStates,
+      locationUnlocked
+    }),
+    [mode, currentChapterId, storyNode, clueStates, locationUnlocked]
+  );
 
   const isGateOpen = (gateId: string): boolean => {
     const gate = chapter.gates.find((candidate) => candidate.id === gateId);
@@ -185,6 +218,13 @@ function App() {
     setFeedback("");
   };
 
+  const handleHydrateCloudProgress = (snapshot: PersistedGameState) => {
+    hydrateProgress(snapshot);
+    setShowQuiz(false);
+    setQuizFailureCount(0);
+    setFeedback("已载入云端进度");
+  };
+
   return (
     <main className="app-shell">
       <h1>消失的机器人大赛方案</h1>
@@ -223,14 +263,19 @@ function App() {
           前往第五章
         </button>
       </div>
+      <GalScene
+        chapterLabel={chapterLabel}
+        chapterTitle={sceneFrame.stageTitle}
+        frame={sceneFrame}
+        showTransition={showChapterTransition}
+      />
+      <CGGallery entries={CG_ENTRIES} unlockedIds={unlockedCgIds} />
       <StoryPanel chapterId={currentChapterId} storyNode={storyNode} />
       <FinalReportPanel visible={showFinalReport} onRestart={handleRestartGame} />
       <TaskTracker items={taskItems} />
       <ModeToggle
         mode={mode}
-        onToggle={() =>
-          setMode((prev) => (prev === "story" ? "investigation" : "story"))
-        }
+        onToggle={() => setMode(mode === "story" ? "investigation" : "story")}
       />
       {mode === "investigation" ? (
         <section className="mode-content">
@@ -266,9 +311,15 @@ function App() {
           <FeedbackToast message={feedback} />
         </section>
       ) : (
-        <section className="mode-content panel">
-          <h2>剧情模式</h2>
-          <p>林警官：先核实线索完整性，再做结论。</p>
+        <section className="mode-content">
+          <section className="panel">
+            <h2>剧情模式</h2>
+            <p>林警官：先核实线索完整性，再做结论。</p>
+          </section>
+          <CloudSyncPanel
+            snapshot={progressSnapshot}
+            onHydrate={handleHydrateCloudProgress}
+          />
         </section>
       )}
     </main>
