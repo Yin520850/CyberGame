@@ -49,4 +49,31 @@ describe("chapter 5 flow", () => {
 
     expect(screen.getByText("第五章完结")).toBeInTheDocument();
   });
+
+  test("shows tiered hints after repeated wrong submissions", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "切换到侦查模式" }));
+    await user.click(screen.getByRole("button", { name: "机房门外" }));
+    await user.click(screen.getByRole("button", { name: "采集 高远口供记录" }));
+    await user.click(screen.getByRole("button", { name: "何老师办公室" }));
+    await user.click(screen.getByRole("button", { name: "采集 动机与误导说明" }));
+    await user.click(screen.getByRole("button", { name: "科技社活动室" }));
+    await user.click(screen.getByRole("button", { name: "采集 修复与责任方案" }));
+
+    await user.click(screen.getByRole("button", { name: "开始结案报告" }));
+    await user.click(screen.getByRole("button", { name: "提交判断" }));
+    expect(
+      screen.getByText("提示：结案结论要同时包含事实、误导和责任。")
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "提交判断" }));
+    expect(screen.getByText("提示：先确认账号使用，再确认误导行为。")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "提交判断" }));
+    expect(
+      screen.getByText("提示：最后补上“修复与责任”才是完整结案。")
+    ).toBeInTheDocument();
+  });
 });

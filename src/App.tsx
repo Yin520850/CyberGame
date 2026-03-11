@@ -97,6 +97,19 @@ const CH5_CORRECT_REASONS = new Set<string>([
   "网络行为需要承担责任与修复后果"
 ]);
 
+const CHAPTER_FAILURE_HINTS: Record<string, string[]> = {
+  ch4: [
+    "提示：先把线索按时间顺序排好。",
+    "提示：重点核对登录记录、草稿纸和改名时间。",
+    "提示：先找“时间接近”，再找“内容对应”，最后看“操作痕迹”。"
+  ],
+  ch5: [
+    "提示：结案结论要同时包含事实、误导和责任。",
+    "提示：先确认账号使用，再确认误导行为。",
+    "提示：最后补上“修复与责任”才是完整结案。"
+  ]
+};
+
 const CH2_PHOTO_IDS = ["ch2_photo_1", "ch2_photo_2", "ch2_photo_3"];
 const STORY_LEVEL: Record<string, number> = {
   ch1_start: 0,
@@ -249,6 +262,7 @@ function App() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
   const [showQuiz, setShowQuiz] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [quizFailureCount, setQuizFailureCount] = useState(0);
   const [revealedHiddenLocations, setRevealedHiddenLocations] = useState<
     Record<string, boolean>
   >({});
@@ -256,6 +270,7 @@ function App() {
   useEffect(() => {
     setSelectedLocationId(chapter.coreLocations[0]);
     setShowQuiz(false);
+    setQuizFailureCount(0);
     setRevealedHiddenLocations({});
   }, [chapter.id, chapter.coreLocations]);
 
@@ -329,9 +344,23 @@ function App() {
   const canGoToChapter4 = canAccessChapter(currentChapterId, storyNode, "ch4");
   const canGoToChapter5 = canAccessChapter(currentChapterId, storyNode, "ch5");
 
+  const setTieredFailureFeedback = (fallbackMessage: string) => {
+    const nextFailureCount = quizFailureCount + 1;
+    setQuizFailureCount(nextFailureCount);
+
+    const hints = CHAPTER_FAILURE_HINTS[currentChapterId];
+    if (!hints || hints.length === 0) {
+      setFeedback(fallbackMessage);
+      return;
+    }
+
+    const hintIndex = Math.min(nextFailureCount - 1, hints.length - 1);
+    setFeedback(hints[hintIndex]);
+  };
+
   const handleCh1QuizSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH1_CORRECT_REASONS.size) {
-      setFeedback("判断不完整，请再检查证据。");
+      setTieredFailureFeedback("判断不完整，请再检查证据。");
       return;
     }
 
@@ -339,10 +368,11 @@ function App() {
       CH1_CORRECT_REASONS.has(reason)
     );
     if (!valid) {
-      setFeedback("判断不完整，请再检查证据。");
+      setTieredFailureFeedback("判断不完整，请再检查证据。");
       return;
     }
 
+    setQuizFailureCount(0);
     useClue("ch1_forum_shot");
     useClue("ch1_forum_export");
     useClue("ch1_chat_log");
@@ -354,7 +384,7 @@ function App() {
 
   const handleCh2ReasoningSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH2_CORRECT_REASONS.size) {
-      setFeedback("推理依据不完整，请结合时间线再判断。");
+      setTieredFailureFeedback("推理依据不完整，请结合时间线再判断。");
       return;
     }
 
@@ -362,10 +392,11 @@ function App() {
       CH2_CORRECT_REASONS.has(reason)
     );
     if (!valid || !isGateOpen("Gate_B_主推理解锁")) {
-      setFeedback("推理依据不完整，请结合时间线再判断。");
+      setTieredFailureFeedback("推理依据不完整，请结合时间线再判断。");
       return;
     }
 
+    setQuizFailureCount(0);
     resolveClue("ch2_filename_hint");
     useClue("ch2_photo_1");
     useClue("ch2_photo_2");
@@ -379,7 +410,7 @@ function App() {
 
   const handleCh3ReasoningSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH3_CORRECT_REASONS.size) {
-      setFeedback("溯源依据不完整，请再核对三条核心线索。");
+      setTieredFailureFeedback("溯源依据不完整，请再核对三条核心线索。");
       return;
     }
 
@@ -387,10 +418,11 @@ function App() {
       CH3_CORRECT_REASONS.has(reason)
     );
     if (!valid || !isGateOpen("Gate_B_主推理解锁")) {
-      setFeedback("溯源依据不完整，请再核对三条核心线索。");
+      setTieredFailureFeedback("溯源依据不完整，请再核对三条核心线索。");
       return;
     }
 
+    setQuizFailureCount(0);
     resolveClue("ch3_old_draft");
     useClue("ch3_cipher_note");
     useClue("ch3_poster_hint");
@@ -403,7 +435,7 @@ function App() {
 
   const handleCh4ReasoningSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH4_CORRECT_REASONS.size) {
-      setFeedback("交叉验证不完整，请检查时间与行为链条。");
+      setTieredFailureFeedback("交叉验证不完整，请检查时间与行为链条。");
       return;
     }
 
@@ -411,10 +443,11 @@ function App() {
       CH4_CORRECT_REASONS.has(reason)
     );
     if (!valid || !isGateOpen("Gate_B_交叉验证解锁")) {
-      setFeedback("交叉验证不完整，请检查时间与行为链条。");
+      setTieredFailureFeedback("交叉验证不完整，请检查时间与行为链条。");
       return;
     }
 
+    setQuizFailureCount(0);
     useClue("ch4_login_log");
     useClue("ch4_chat_full");
     useClue("ch4_forum_draft");
@@ -427,7 +460,7 @@ function App() {
 
   const handleCh5ReasoningSubmit = (selectedReasons: string[]) => {
     if (selectedReasons.length !== CH5_CORRECT_REASONS.size) {
-      setFeedback("结案要点不完整，请补齐责任链条。");
+      setTieredFailureFeedback("结案要点不完整，请补齐责任链条。");
       return;
     }
 
@@ -435,10 +468,11 @@ function App() {
       CH5_CORRECT_REASONS.has(reason)
     );
     if (!valid || !isGateOpen("Gate_A_结案解锁")) {
-      setFeedback("结案要点不完整，请补齐责任链条。");
+      setTieredFailureFeedback("结案要点不完整，请补齐责任链条。");
       return;
     }
 
+    setQuizFailureCount(0);
     useClue("ch5_confession");
     useClue("ch5_motive_note");
     useClue("ch5_responsibility_plan");
