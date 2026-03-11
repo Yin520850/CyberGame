@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 
 interface JudgementQuizProps {
+  title?: string;
+  prompt?: string;
+  reasons?: string[];
+  submitText?: string;
   onSubmit: (selectedReasons: string[]) => void;
 }
 
@@ -13,7 +17,13 @@ const REASONS = [
   "队长身份最可疑"
 ];
 
-function JudgementQuiz({ onSubmit }: JudgementQuizProps) {
+function JudgementQuiz({
+  title = "证据判断",
+  prompt = "选择三项不能直接证明陈小北泄密的理由：",
+  reasons = REASONS,
+  submitText = "提交判断",
+  onSubmit
+}: JudgementQuizProps) {
   const [selected, setSelected] = useState<string[]>([]);
 
   const selectedSet = useMemo(() => new Set(selected), [selected]);
@@ -28,10 +38,10 @@ function JudgementQuiz({ onSubmit }: JudgementQuizProps) {
 
   return (
     <section className="panel">
-      <h2>证据判断</h2>
-      <p>选择三项不能直接证明陈小北泄密的理由：</p>
+      <h2>{title}</h2>
+      <p>{prompt}</p>
       <div className="quiz-list">
-        {REASONS.map((reason) => (
+        {reasons.map((reason) => (
           <label key={reason} className="quiz-item">
             <input
               type="checkbox"
@@ -43,7 +53,7 @@ function JudgementQuiz({ onSubmit }: JudgementQuizProps) {
         ))}
       </div>
       <button type="button" onClick={() => onSubmit(selected)}>
-        提交判断
+        {submitText}
       </button>
     </section>
   );

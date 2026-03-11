@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <rect width="960" height="540" fill="#e2e8f0" />
+  <rect x="60" y="70" width="240" height="120" rx="12" fill="#bfdbfe" />
+  <text x="92" y="140" font-size="24" fill="#0f172a">摄影社角落</text>
+  <rect x="350" y="70" width="240" height="120" rx="12" fill="#fde68a" />
+  <text x="420" y="140" font-size="24" fill="#0f172a">校门口</text>
+  <rect x="640" y="70" width="240" height="120" rx="12" fill="#fecaca" />
+  <text x="676" y="140" font-size="24" fill="#0f172a">便利店门前</text>
+  <rect x="180" y="280" width="240" height="120" rx="12" fill="#c7d2fe" />
+  <text x="225" y="350" font-size="24" fill="#0f172a">路口视角点</text>
+  <rect x="470" y="280" width="240" height="120" rx="12" fill="#bbf7d0" />
+  <text x="530" y="350" font-size="24" fill="#0f172a">机房门外</text>
+</svg>
