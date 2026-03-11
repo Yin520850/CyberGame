@@ -1,0 +1,82 @@
+:root {
+  font-family: "Microsoft YaHei UI", "Noto Sans SC", sans-serif;
+  color: #0f172a;
+  background: #f3f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  justify-items: center;
+  padding: 24px;
+}
+
+.mode-content {
+  width: min(900px, 100%);
+  display: grid;
+  gap: 12px;
+}
+
+.chapter-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.panel {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.location-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.location-btn,
+.clue-btn,
+.mode-toggle,
+button {
+  border: 1px solid #64748b;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.location-btn.active {
+  background: #dbeafe;
+}
+
+.quiz-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.quiz-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.feedback-toast {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #dcfce7;
+  border: 1px solid #22c55e;
+}
