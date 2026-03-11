@@ -261,6 +261,29 @@ button:disabled,
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cloud-metrics {
+  border: 1px dashed #b69b65;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff8ea;
+  margin-bottom: 8px;
+}
+
+.cloud-metrics p {
+  margin: 3px 0;
+}
+
+.cloud-rank p {
+  margin: 6px 0;
+  font-weight: 700;
+}
+
+.cloud-rank ol {
+  margin: 0;
+  padding-left: 18px;
 }
 
 @keyframes breathe {

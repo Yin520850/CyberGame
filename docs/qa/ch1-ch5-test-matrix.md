@@ -25,6 +25,7 @@
 | QA-19 | 终章完成后不可再次进入结案问答 | `tests/chapters/ch5-flow.test.tsx` |
 | QA-20 | Gal 场景演出与 CG 锁定/解锁展示正确 | `tests/story/gal-presentation.test.tsx` |
 | QA-21 | 小后端云存档接口支持登录与读写回环 | `tests/server/cloud-api.test.ts` |
+| QA-22 | 账号注册/登录、受保护进度与排行榜可用 | `tests/server/auth-api.test.ts` |
 
 ## 运行命令
 
@@ -35,5 +36,5 @@ npm run build
 
 ## 最新执行结果（2026-03-11）
 
-- `npm run test`: 19 files / 37 tests 全部通过
+- `npm run test`: 20 files / 39 tests 全部通过
 - `npm run build`: 通过
